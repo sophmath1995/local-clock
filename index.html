@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, height=1080, initial-scale=1.0">
+<title>Fana Media vMix Broadcast Overlay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&display=swap');
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Transparent background required for vMix Overlay / Keying */
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: transparent !important;
+    background-color: rgba(0, 0, 0, 0) !important;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 16:9 Broadcast Safe-Area Container */
+  .vmix-canvas {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3.5vh 3.5vw;
+    overflow: hidden;
+  }
+
+  /* 3D Broadcast Frame */
+  .panel-local {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(155deg, rgba(23, 105, 214, 0.94) 0%, rgba(11, 70, 156, 0.96) 55%, rgba(7, 47, 110, 0.98) 100%);
+    border-top: 3px solid rgba(253, 224, 71, 0.9);
+    border-left: 2px solid rgba(125, 211, 252, 0.55);
+    border-right: 2px solid rgba(14, 116, 144, 0.45);
+    border-bottom: 3px solid #04204d;
+    border-radius: clamp(24px, 2.5vw, 44px);
+    padding: 4vh 4vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    box-shadow:
+      0 1.2vh 0 #052559,
+      0 2vh 0 #031536,
+      0 2.5vh 5vh rgba(0, 0, 0, 0.65),
+      inset 0 3px 6px rgba(255, 255, 255, 0.4),
+      inset 0 -8px 20px rgba(3, 18, 46, 0.65);
+    color: #ffffff;
+    overflow: hidden;
+  }
+
+  /* Top Broadcast Accent Bar */
+  .panel-local::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 7px;
+    background: linear-gradient(90deg, #1d8cf8 0%, #38bdf8 55%, #f59e0b 100%);
+    z-index: 15;
+  }
+
+  /* Glossy Sheen */
+  .panel-local::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 46%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: clamp(22px, 2.3vw, 42px) clamp(22px, 2.3vw, 42px) 0 0;
+    pointer-events: none;
+  }
+
+  /* Top Scrolling Ticker Bar: FANA MEDIA CORPORATION */
+  .ticker-header {
+    position: absolute;
+    top: clamp(22px, 3.5vh, 48px);
+    left: clamp(40px, 4vw, 80px);
+    right: clamp(140px, 14vw, 240px);
+    overflow: hidden;
+    background: rgba(8, 16, 36, 0.72);
+    border: 1.5px solid rgba(56, 189, 248, 0.35);
+    border-radius: 999px;
+    padding: 1vh 0;
+    display: flex;
+    z-index: 20;
+    mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 6%, #000 94%, transparent 100%);
+  }
+
+  .ticker-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+    transform: translateZ(0);
+    animation: scrollTickerSeamless 32s linear infinite;
+  }
+
+  .ticker-item {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    font-size: clamp(1rem, 1.5vw, 1.75rem);
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    color: #fde047;
+    text-transform: uppercase;
+    padding-right: 48px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .ticker-item span {
+    color: #38bdf8;
+    margin: 0 12px;
+  }
+
+  @keyframes scrollTickerSeamless {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+
+  /* Top-Right Corner Rotating Logo */
+  .corner-logo-ring {
+    position: absolute;
+    top: clamp(20px, 3.2vh, 44px);
+    right: clamp(24px, 3vw, 52px);
+    width: clamp(82px, 8.5vw, 140px);
+    height: clamp(82px, 8.5vw, 140px);
+    border-radius: 50%;
+    padding: clamp(4px, 0.45vw, 7px);
+    background: linear-gradient(135deg, #38bdf8, #1d8cf8, #f59e0b);
+    box-shadow:
+      0 6px 0 #052252,
+      0 14px 28px rgba(0, 0, 0, 0.6),
+      0 0 24px rgba(56, 189, 248, 0.45),
+      inset 0 2px 3px rgba(255, 255, 255, 0.55);
+    z-index: 20;
+  }
+
+  .corner-logo-box {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #0b1329;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.7);
+  }
+
+  .corner-logo-box svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .rotating-arcs {
+    transform-origin: 100px 100px;
+    will-change: transform;
+    animation: spinLogoArcs 6s linear infinite;
+  }
+
+  @keyframes spinLogoArcs {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Main Local Time Readout */
+  .value-primary {
+    font-size: clamp(6rem, 18vw, 22rem);
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: #ffffff;
+    white-space: nowrap;
+    text-shadow:
+      0 6px 0 rgba(5, 28, 66, 0.9),
+      0 16px 36px rgba(0, 0, 0, 0.55);
+  }
+
+  .value-sub {
+    font-size: clamp(1.5rem, 3vw, 3.6rem);
+    color: #dbeafe;
+    font-weight: 700;
+    margin-top: 3vh;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Bottom-Left Corner Handle */
+  .bottom-left-handle {
+    position: absolute;
+    bottom: clamp(22px, 3.5vh, 48px);
+    left: clamp(32px, 3.5vw, 60px);
+    font-size: clamp(1.6rem, 2.75vw, 3.3rem);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(219, 234, 254, 0.95);
+    text-shadow: 0 3px 8px rgba(0, 0, 0, 0.55);
+    z-index: 20;
+  }
+
+  /* Bottom-Right LIVE Tally Badge */
+  .bottom-right-live {
+    position: absolute;
+    bottom: clamp(26px, 3.8vh, 52px);
+    right: clamp(32px, 3.5vw, 60px);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(180deg, #f87171 0%, #dc2626 100%);
+    color: #ffffff;
+    font-size: clamp(1rem, 1.4vw, 1.75rem);
+    font-weight: 800;
+    padding: 8px 20px;
+    border-radius: 999px;
+    letter-spacing: 0.1em;
+    box-shadow: 0 4px 0 #7f1d1d, 0 8px 18px rgba(239, 68, 68, 0.55);
+    z-index: 20;
+  }
+
+  .live-dot {
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    border-radius: 50%;
+    animation: pulse 1.2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.85); }
+  }
+</style>
+</head>
+<body>
+
+  <div class="vmix-canvas">
+    <div class="panel-local" aria-live="polite">
+      
+      <!-- Top Scrolling Ticker: FANA MEDIA CORPORATION -->
+      <div class="ticker-header">
+        <div class="ticker-track">
+          <div class="ticker-item">
+            <span>•</span> FANA MEDIA CORPORATION <span>•</span> BROADCASTING LIVE <span>•</span> FANA MEDIA CORPORATION <span>•</span>
+          </div>
+          <div class="ticker-item" aria-hidden="true">
+            <span>•</span> FANA MEDIA CORPORATION <span>•</span> BROADCASTING LIVE <span>•</span> FANA MEDIA CORPORATION <span>•</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top-Right Corner Rotating Logo -->
+      <div class="corner-logo-ring" title="Fana Media Logo">
+        <div class="corner-logo-box">
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#0b63b8"/>
+                <stop offset="65%" stop-color="#2879b9"/>
+                <stop offset="100%" stop-color="#a5a474"/>
+              </linearGradient>
+              <radialGradient id="sunGrad" cx="45%" cy="55%" r="55%">
+                <stop offset="0%" stop-color="#fff200"/>
+                <stop offset="45%" stop-color="#ffb300"/>
+                <stop offset="100%" stop-color="#f57c00"/>
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="100" r="98" fill="url(#bgGrad)"/>
+            <circle cx="96" cy="104" r="54" fill="url(#sunGrad)"/>
+
+            <g class="rotating-arcs">
+              <path d="M 100 22 A 78 78 0 0 0 100 178" fill="none" stroke="#ffca08" stroke-width="5.5" stroke-linecap="round"/>
+              <path d="M 78 32 A 70 70 0 0 0 32 105" fill="none" stroke="#ffca08" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+
+            <path d="M 80 54 C 86 68, 86 84, 72 102 C 58 120, 56 138, 76 138 L 86 138 L 86 164 L 100 164 L 100 138 L 120 138 C 118 126, 110 124, 100 124 L 100 102 L 86 102 L 86 124 L 76 124 C 70 124, 72 114, 82 102 C 96 86, 98 68, 80 54 Z" fill="#176cb8"/>
+            <path d="M 105 58 C 118 36, 148 40, 166 28 C 166 44, 150 50, 130 50 C 116 50, 110 56, 105 58 Z" fill="#ffb300"/>
+            <path d="M 106 58 C 94 74, 92 98, 108 106 C 122 112, 132 108, 132 116 C 132 102, 120 98, 110 92 C 102 86, 104 68, 116 58 Z" fill="#176cb8"/>
+            <path d="M 134 94 C 148 112, 146 144, 124 162 L 124 122 C 124 110, 130 102, 134 94 Z" fill="#2c7ab7"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Main Local Time Display -->
+      <div class="value-primary" id="eth-time">--:--:--</div>
+      <div class="value-sub" id="eth-period">Loading Time...</div>
+
+      <!-- Bottom-Left Handle -->
+      <div class="bottom-left-handle">@BELLAYYA</div>
+
+      <!-- Bottom-Right LIVE Badge -->
+      <div class="bottom-right-live">
+        <span class="live-dot"></span>LIVE
+      </div>
+    </div>
+  </div>
+
+<script>
+  function pad(num) {
+    return String(num).padStart(2, '0');
+  }
+
+  function updateLocalTime() {
+    const now = new Date();
+    const eatString = now.toLocaleString("en-US", { timeZone: "Africa/Addis_Ababa" });
+    const eatDate = new Date(eatString);
+
+    const hours = eatDate.getHours();
+    const minutes = pad(eatDate.getMinutes());
+    const seconds = pad(eatDate.getSeconds());
+
+    // Ethiopian Local Time Calculation (6-hour offset)
+    const ethHours = (hours + 6) % 12 || 12;
+    let period = "";
+    if (hours >= 6 && hours < 12) period = "Morning";
+    else if (hours >= 12 && hours < 18) period = "Afternoon";
+    else if (hours >= 18 && hours < 24) period = "Evening";
+    else period = "Night";
+
+    document.getElementById("eth-time").textContent = `${pad(ethHours)}:${minutes}:${seconds}`;
+    document.getElementById("eth-period").textContent = `Ethiopian Local Time (${period})`;
+  }
+
+  updateLocalTime();
+  setInterval(updateLocalTime, 1000);
+</script>
+
+</body>
+</html>
